@@ -56,13 +56,13 @@ app.get("/register", function(req, res){
 });
 
 app.get("/secrets", function(req,res){
-    if(req.isAuthenticated()){
+    if(req.isAuthenticated()){ //checks if the user is authenticated using the cookie/ checks if the session is running
         res.render("secrets");
     }
     else{
         res.redirect("/login");
     }
-})
+});
     
 //Post requests-
 app.post("/register", function(req, res){
@@ -72,7 +72,7 @@ app.post("/register", function(req, res){
             res.redirect("/register");
         }
         else{
-            passport.authenticate("local")(req, res, function(){
+            passport.authenticate("local")(req, res, function(){ //authenticates the user/ starts a session
                 res.redirect("/secrets");
             });
         }
@@ -80,7 +80,20 @@ app.post("/register", function(req, res){
 });
 
 app.post("/login", function(req, res){
-
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password,
+    });
+    req.login(user, function(err){ //req.login- helps to login
+        if(err){
+            console.log(err);
+        }
+        else{
+            passport.authenticate("local")(req, res, function(){ //authenticates the user/ starts a session
+                res.redirect("/secrets");
+            });
+        }
+    });
 });
 
 //Launching the server-
