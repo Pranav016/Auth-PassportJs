@@ -83,6 +83,11 @@ app.get('/logout', function(req, res){
     req.logout();
     res.redirect('/');
 });
+
+app.get("/auth/google",
+  passport.authenticate("google", { scope:
+      [ "email", "profile" ] }
+));
     
 //Post requests-
 app.post("/register", function(req, res){
