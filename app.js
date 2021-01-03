@@ -80,12 +80,14 @@ app.get("/register", function(req, res){
 });
 
 app.get("/secrets", function(req,res){
-    if(req.isAuthenticated()){ //checks if the user is authenticated using the cookie/ checks if the session is running
-        res.render("secrets");
-    }
-    else{
-        res.redirect("/login");
-    }
+    User.find({secret:{ $ne: null }}, function(err, foundUsers){
+        if(!err){
+            res.render("secrets", {usersWithSecrets: foundUsers});
+        }
+        else{
+            console.log(err);
+        }
+    })
 });
 
 app.get("/logout", function(req, res){
@@ -105,7 +107,7 @@ app.get( "/auth/google/secrets",
 }));
 
 app.get("/submit", function(req, res){
-    if(req.isAuthenticated()){
+    if(req.isAuthenticated()){ //checks if the user is authenticated using the cookie/ checks if the session is running
         res.render("submit");
     }
     else{
@@ -147,14 +149,14 @@ app.post("/login", function(req, res){
 
 app.post("/submit", function(req, res){
     const submittedSecret = req.body.secret;
-    User.findById(req.body.id, function(err, foundUser){
-        if(foundUser){
-            user.secret = submittedSecret;
-            user.save(function(){
+    User.findById(req.user.id, function(err, foundUser){
+        if(!err){
+            foundUser.secret = submittedSecret;
+            foundUser.save(function(){
                 res.redirect("/secrets");
             });
         }
-        else{
+        else{;
             res.redirect("/login");
         }
     });
