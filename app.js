@@ -24,6 +24,34 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+//Connecting to the DB-
+mongoose.connect('mongodb://localhost:27017/userDB', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.set("useCreateIndex", true);
+
+//Making a schema for the DB-
+const userSchema = new mongoose.Schema({
+    email: String,
+    password: String,
+    googleId: String,
+});
+userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(findOrCreate);
+
+//Setting up our DB model-
+const User = new mongoose.model("User", userSchema);
+
+//Setup passport-
+passport.use(User.createStrategy());
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+  });
+  
+  passport.deserializeUser(function(id, done) {
+    User.findById(id, function(err, user) {
+      done(err, user);
+    });
+  });
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
@@ -36,26 +64,6 @@ passport.use(new GoogleStrategy({
     });
   }
 ));
-
-//Connecting to the DB-
-mongoose.connect('mongodb://localhost:27017/userDB', {useNewUrlParser: true, useUnifiedTopology: true});
-mongoose.set("useCreateIndex", true);
-
-//Making a schema for the DB-
-const userSchema = new mongoose.Schema({
-    email: String,
-    password: String,
-});
-userSchema.plugin(passportLocalMongoose);
-userSchema.plugin(findOrCreate);
-
-//Setting up our DB model-
-const User = new mongoose.model("User", userSchema);
-
-//Setup passport-
-passport.use(User.createStrategy());
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
 
 //Get requests-
 app.get("/", function(req, res){
@@ -86,8 +94,14 @@ app.get('/logout', function(req, res){
 
 app.get("/auth/google",
   passport.authenticate("google", { scope:
-      [ "email", "profile" ] }
+      [ "profile" ] }
 ));
+
+app.get( "/auth/google/secrets",
+    passport.authenticate( "google", {
+        successRedirect: "/secrets",
+        failureRedirect: "/login"
+}));
     
 //Post requests-
 app.post("/register", function(req, res){
